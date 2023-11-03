@@ -22,5 +22,5 @@ Route::get('/', function () {
 });
 
 // Route::get('/counter', Counter::class)->name('counters');
-Route::get('/list', SongList::class)->name('list');
+Route::get('/list', SongList::class)->name('list')->lazy();;
 Route::get('/settings', Settings::class)->name('settings');

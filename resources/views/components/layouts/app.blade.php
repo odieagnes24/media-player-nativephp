@@ -222,5 +222,7 @@
                 })
             });
         </script>
+
+        @stack('my-scripts')
     </body>
 </html>
