@@ -24,12 +24,12 @@ class NativeAppServiceProvider implements ProvidesPhpIni
         // ->register();
 
         Window::open()
-            ->minWidth(1024)
-            ->minHeight(768)
-            ->width(1024)
-            ->height(768)
+            ->minWidth(1011)
+            ->minHeight(718)
+            ->width(1011)
+            ->height(718)
             ->rememberState()
-            ->route('settings');
+            ->route('list');
             // ->titleBarHidden();
             // ->backgroundColor('#00000050'); 
 
@@ -43,7 +43,7 @@ class NativeAppServiceProvider implements ProvidesPhpIni
     public function phpIni(): array
     {
         return [
-            'memory_limit' => '512M',
+            'memory_limit' => '1024M',
             'display_errors' => '1',
             'error_reporting' => 'E_ALL',
             'max_execution_time' => '0',
