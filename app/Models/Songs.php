@@ -16,5 +16,6 @@ class Songs extends Model
         'album',
         'playtime',
         'picture',
+        'mime_type',
     ];
 }
