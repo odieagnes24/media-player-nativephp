@@ -15,14 +15,6 @@ class NativeAppServiceProvider implements ProvidesPhpIni
      */
     public function boot(): void
     {
-
-        // Menu::new()
-        // ->appMenu()
-        // ->editMenu()
-        // ->viewMenu()
-        // ->windowMenu()
-        // ->register();
-
         Window::open()
             ->minWidth(1011)
             ->minHeight(718)
@@ -30,11 +22,6 @@ class NativeAppServiceProvider implements ProvidesPhpIni
             ->height(718)
             ->rememberState()
             ->route('list');
-            // ->titleBarHidden();
-            // ->backgroundColor('#00000050'); 
-
-        // MenuBar::create()
-        // ->label('Status: Online');     
     }
 
     /**

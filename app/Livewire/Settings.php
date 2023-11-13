@@ -7,12 +7,15 @@ use App\Models\Path;
 use App\Models\Songs;
 use Exception;
 use getID3 as GlobalGetID3;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Native\Laravel\Dialog;
 
 class Settings extends Component
 {
     private $files = [];
+
+    private $scanned_files = [];
 
     private $allowed_formats = ['mp3', 'flac', 'ogg'];
 
@@ -37,6 +40,9 @@ class Settings extends Component
         }
 
         $this->analyzeFiles();
+
+        
+        Storage::disk('public')->put('/scanned/data.json', json_encode($this->scanned_files));
     }
 
     private function analyzeFiles()
@@ -60,6 +66,8 @@ class Settings extends Component
  
         // Initialize a progress variable
         $progress = 0;
+
+        $id = 1;
         
         foreach (array_chunk($this->files, $chunkSize) as $chunk) {
             // Process the current chunk here
@@ -74,7 +82,8 @@ class Settings extends Component
                 $getId3 = new GlobalGetID3;
                 $track = $getId3->analyze($file);
 
-                $this->saveTrack($track);
+                $this->saveTrack($track, $id);
+                $id += 1;
             }
 
             // Update the progress
@@ -101,14 +110,15 @@ class Settings extends Component
         $this->dispatch('close-scan-modal');
     }
 
-    private function saveTrack($track)
-    {
+    private function saveTrack($track, $id)
+    {  
         $path = $track['filenamepath'];
         $title = pathinfo($track['filenamepath'], PATHINFO_FILENAME);
-        $artist = 'Unknown Artis';
+        $artist = 'Unknown Artist';
         $album = 'Unknown Album';
         $playtime = '0:00';
         $picture = null;
+        $mime_type = $track['mime_type'];
     
         if(array_key_exists('tags', $track))
         {
@@ -165,22 +175,70 @@ class Settings extends Component
                 if(array_key_exists('data', $attempt))
                 {
                     $picture = $attempt['data'];
-                    // $picture = base64_encode($attempt['data']);
                 } 
             }
         }
 
-        Songs::updateOrCreate([
-            'title' => $title,
-            'path' => $path,
-        ], [
+        // Songs::updateOrCreate([
+        //     'path' => $path,
+        // ], [
+        //     'path' => $path,
+        //     'title' => $title,
+        //     'artist' => $artist,
+        //     'album' => $album,
+        //     'playtime' => $playtime,
+        //     'picture' => $picture,
+        //     'mime_type' => $mime_type,
+        // ]);
+       
+        $has_art = 'no';
+        if(!empty($picture))
+        {
+            $im = $this->attemptImageString($picture);
+            
+            if($im)
+            {
+                $temp_file = tempnam(sys_get_temp_dir(), 'image_') . '.png';
+    
+                imagepng($im, $temp_file, 0);
+        
+                $file_path = '/scanned/art/'. $id .'.png';
+        
+                Storage::disk('public')->put($file_path, file_get_contents($temp_file));
+        
+                imagedestroy($im);
+                unlink($temp_file);
+
+                $has_art = 'yes';
+            }
+        }
+      
+        array_push($this->scanned_files, [
+            'id' => $id,
             'path' => $path,
             'title' => $title,
             'artist' => $artist,
             'album' => $album,
             'playtime' => $playtime,
-            'picture' => $picture,
+            'mime_type' => $mime_type,
+            'art' => $has_art,
         ]);
+
+    }
+
+    private function attemptImageString($picture)
+    {
+        try {
+            $im = imageCreateFromString($picture);
+        
+            if ($im === false) {
+                throw new Exception('Failed to create image from string');
+            }
+            
+            return $im;
+        } catch (Exception $e) {
+            return false;
+        }
     }
 
     private function deepScan($directory)
