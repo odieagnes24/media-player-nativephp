@@ -11,6 +11,6 @@
         "vite": "^4.0.0"
     },
     "dependencies": {
-        "wavesurfer.js": "^7.3.9"
+        "wavesurfer.js": "^7.4.4"
     }
 }
