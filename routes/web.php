@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Controllers\PlayerController;
 use App\Livewire\Counter;
 use App\Livewire\Settings;
 use App\Livewire\SongList;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,6 +23,7 @@ Route::get('/', function () {
     return phpinfo();
 });
 
-// Route::get('/counter', Counter::class)->name('counters');
-Route::get('/list', SongList::class)->name('list')->lazy();;
+Route::get('/list', SongList::class)->name('list')->lazy();
 Route::get('/settings', Settings::class)->name('settings');
+
+Route::get('/readfile/{data}', [PlayerController::class, 'readfile']);

@@ -1,19 +1,35 @@
 <div class="card">
-  @foreach ($tracks as $track)
-    <div class="list-group card-list-group">
+  @foreach ($this->tracks as $key => $track)
+    <div class="list-group card-list-group" x-data="{
+      is_hover: false
+    }">
         <div class="list-group-item">
           <div class="row g-2 align-items-center">
-            <div class="col-auto">
-              <img src="data:image/jpeg;base64,{{ base64_encode($track->picture) }}" class="rounded" alt="Song" width="40" height="40">
+            <div class="col-auto" style="position:relative" wire:click="doPlay({{ $key }})" @mouseover="is_hover = true" @mouseout="is_hover = false">
+              <div x-show.important="is_hover" class="rounded d-flex justify-content-center align-items-center" style="position:absolute; width:40px; height:40px; background:#f1f5f9; opacity:0.9;">
+                <span style="color: #6c7a91; cursor:pointer;">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-player-play-filled" id="btn-play" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                          <path d="M6 4v16a1 1 0 0 0 1.524 .852l13 -8a1 1 0 0 0 0 -1.704l-13 -8a1 1 0 0 0 -1.524 .852z" stroke-width="0" fill="currentColor"></path>
+                      </svg>
+
+                      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-player-pause-filled d-none" id="btn-pause" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                          <path d="M9 4h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h2a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2z" stroke-width="0" fill="currentColor"></path>
+                          <path d="M17 4h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h2a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2z" stroke-width="0" fill="currentColor"></path>
+                      </svg>
+                  </span>
+              </div>
+              <img src="@if($track['art'] == 'yes') /storage/scanned/art/{{ $track['id'] }}.png @else /assets/default_art_1.png @endif" class="rounded" alt="Song" width="40" height="40">
             </div>
             <div class="col">
-                {{ $track->title }}
+                {{ $track['title'] }}
               <div class="text-muted">
-                {{ $track->artist }}
+                {{ $track['artist'] }}
               </div>
             </div>
             <div class="col-auto text-muted">
-              03:41
+              {{ $track['playtime'] }}
             </div>
             <div class="col-auto">
               <a href="#" class="link-secondary">
