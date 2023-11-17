@@ -4,7 +4,7 @@ namespace App\Livewire;
 
 use App\Http\Controllers\PathController;
 use App\Models\Path;
-use App\Models\Songs;
+use App\Models\Track;
 use Exception;
 use getID3 as GlobalGetID3;
 use Illuminate\Support\Facades\Storage;
@@ -15,7 +15,7 @@ class Settings extends Component
 {
     private $files = [];
 
-    private $scanned_files = [];
+    // private $scanned_files = [];
 
     private $allowed_formats = ['mp3', 'flac', 'ogg'];
 
@@ -42,11 +42,11 @@ class Settings extends Component
         $this->analyzeFiles();
 
         
-        Storage::disk('public')->put('/scanned/data.json', json_encode($this->scanned_files));
+        // Storage::disk('public')->put('/scanned/data.json', json_encode($this->scanned_files));
     }
 
     private function analyzeFiles()
-    {
+    {  
         // $getId3 = new GlobalGetID3;
         // $track = $getId3->analyze('C:\web\media-player-native-php\public\songs\DNA.mp3');
       
@@ -83,6 +83,7 @@ class Settings extends Component
                 $track = $getId3->analyze($file);
 
                 $this->saveTrack($track, $id);
+            
                 $id += 1;
             }
 
@@ -107,11 +108,12 @@ class Settings extends Component
         }
         
         $this->progress = 0;
-        $this->dispatch('close-scan-modal');
+        // $this->dispatch('close-scan-modal');
+        $this->js("document.getElementById('closeScanModal').click()"); 
     }
 
     private function saveTrack($track, $id)
-    {  
+    { 
         $path = $track['filenamepath'];
         $title = pathinfo($track['filenamepath'], PATHINFO_FILENAME);
         $artist = 'Unknown Artist';
@@ -179,19 +181,8 @@ class Settings extends Component
             }
         }
 
-        // Songs::updateOrCreate([
-        //     'path' => $path,
-        // ], [
-        //     'path' => $path,
-        //     'title' => $title,
-        //     'artist' => $artist,
-        //     'album' => $album,
-        //     'playtime' => $playtime,
-        //     'picture' => $picture,
-        //     'mime_type' => $mime_type,
-        // ]);
-       
-        $has_art = 'no';
+        $has_art = false;
+
         if(!empty($picture))
         {
             $im = $this->attemptImageString($picture);
@@ -209,20 +200,33 @@ class Settings extends Component
                 imagedestroy($im);
                 unlink($temp_file);
 
-                $has_art = 'yes';
+                $has_art = true;
             }
         }
-      
-        array_push($this->scanned_files, [
-            'id' => $id,
+
+
+        Track::updateOrCreate([
+            'path' => $path,
+        ], [
             'path' => $path,
             'title' => $title,
             'artist' => $artist,
             'album' => $album,
             'playtime' => $playtime,
+            'art' => ($has_art) ? '/scanned/art/'. $id .'.png' : null,
             'mime_type' => $mime_type,
-            'art' => $has_art,
         ]);
+      
+        // array_push($this->scanned_files, [
+        //     'id' => $id,
+        //     'path' => $path,
+        //     'title' => $title,
+        //     'artist' => $artist,
+        //     'album' => $album,
+        //     'playtime' => $playtime,
+        //     'mime_type' => $mime_type,
+        //     'art' => $has_art,
+        // ]);
 
     }
 

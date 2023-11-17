@@ -7,7 +7,7 @@
                 </a>
             </h1>
             <div class="d-flex align-items-center mx-3 justify-content-between" style="width: 180px;">
-                <span style="color: #551a8b; cursor:pointer;">
+                <span style="color: #551a8b; cursor:pointer;" id="prev_btn">
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-player-skip-back-filled" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                         <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                         <path d="M19.496 4.136l-12 7a1 1 0 0 0 0 1.728l12 7a1 1 0 0 0 1.504 -.864v-14a1 1 0 0 0 -1.504 -.864z" stroke-width="0" fill="currentColor"></path>
@@ -26,7 +26,7 @@
                         <path d="M17 4h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h2a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2z" stroke-width="0" fill="currentColor"></path>
                     </svg>
                 </span>
-                <span style="color: #551a8b; cursor:pointer;">
+                <span style="color: #551a8b; cursor:pointer;" id="next_btn">
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-player-skip-forward-filled" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                         <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                         <path d="M3 5v14a1 1 0 0 0 1.504 .864l12 -7a1 1 0 0 0 0 -1.728l-12 -7a1 1 0 0 0 -1.504 .864z" stroke-width="0" fill="currentColor"></path>
@@ -61,11 +61,13 @@
         </div>
         <div class="flex-shrink d-flex align-items-center justify-content-end">
             <span style="color: #551a8b; cursor:pointer;" class="float-right">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-settings" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                    <path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z"></path>
-                    <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"></path>
-                </svg>
+                <button class="btn btn-outline-success p-0" data-bs-toggle="modal" data-bs-target="#settingsModal">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="m-0 icon icon-tabler icon-tabler-settings" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                        <path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z"></path>
+                        <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"></path>
+                    </svg>
+                </button>
             </span>
         </div>
     </div>
@@ -86,13 +88,27 @@
         </div>
 
     </div>
-    <div class="px-4 pt-3" style="background-color: #f6f8fb;">
-        <div class="d-flex">
-            <h2 class="me-4" style="cursor: pointer; border-bottom: solid orange;">List</h2>
-            <h2 class="me-4" style="cursor: pointer;">Albums</h2>
-            <h2 class="me-4" style="cursor: pointer;">Artist</h2>
+  
+
+    @teleport('body')
+    <!-- Modal -->
+    <div wire:ignore.self class="modal fade" id="settingsModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="settingsModalLabel">Settings</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @livewire('settings')
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+            </div>
         </div>
     </div>
+    @endteleport
 </div>
 
 @push('my-scripts')
@@ -114,6 +130,19 @@
             let btn_pause = document.getElementById('btn-pause')
             let song_title = document.getElementById('song_title')
             let album_art = document.getElementById('album_art')
+            let prev_btn = document.getElementById('prev_btn')
+            let next_btn = document.getElementById('next_btn')
+
+            var next_id
+            var prev_id
+
+            prev_btn.addEventListener('click', () => {
+                @this.playTrack(prev_id)
+            })
+           
+            next_btn.addEventListener('click', () => {
+                @this.playTrack(next_id)
+            })
 
             document.getElementById('play').addEventListener('click', function (e) {
                 e.preventDefault()
@@ -135,18 +164,18 @@
                 }
             });
 
-            function loadTrack(id, data, title, art)
+            function loadTrack(id, title, art)
             {
-                if(art == 'yes')
+                if(art != 'null')
                 {
-                    album_art.setAttribute('src', '/storage/scanned/art/' + id + '.png')
+                    album_art.setAttribute('src', '/storage' + art)
                 }
                 else
                 {
                     album_art.setAttribute('src', '/assets/default_art_1.png')
                 }    
                 
-                wavesurfer.load('/readfile/' + data)
+                wavesurfer.load('/readfile/' + id)
 
                 const formatTime = (seconds) => {
                     const minutes = Math.floor(seconds / 60)
@@ -184,7 +213,9 @@
          
             Livewire.on('load-track', (event) => {
                 console.log(event)
-                loadTrack(event[0].id, event[0].data, event[0].title, event[0].art)
+                next_id = event[0].next
+                prev_id = event[0].prev
+                loadTrack(event[0].id, event[0].title, event[0].art)
             });
         });
 

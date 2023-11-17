@@ -4,6 +4,7 @@ use App\Http\Controllers\PlayerController;
 use App\Livewire\Counter;
 use App\Livewire\Settings;
 use App\Livewire\SongList;
+use App\Livewire\TrackList;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
@@ -24,6 +25,7 @@ Route::get('/', function () {
 });
 
 Route::get('/list', SongList::class)->name('list')->lazy();
+Route::get('/tracks', TrackList::class)->name('tracks')->lazy();
 Route::get('/settings', Settings::class)->name('settings');
 
-Route::get('/readfile/{data}', [PlayerController::class, 'readfile']);
+Route::get('/readfile/{track:id}', [PlayerController::class, 'readfile']);

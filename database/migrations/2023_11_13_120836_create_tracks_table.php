@@ -11,14 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('songs', function (Blueprint $table) {
+        Schema::create('tracks', function (Blueprint $table) {
             $table->id();
             $table->string('path');
             $table->string('title');
             $table->string('artist')->default('Unknown Artist');
             $table->string('album')->default('Unknown Album');
             $table->string('playtime')->default('0:00');
-            $table->longText('picture')->nullable();
+            $table->longText('art')->nullable();
+            $table->string('mime_type')->nullable();
             $table->timestamps();
         });
     }
@@ -28,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('songs');
+        Schema::dropIfExists('tracks');
     }
 };

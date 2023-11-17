@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\Track;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -13,15 +14,19 @@ class Player extends Component
     }
 
     #[On('play-track')]
-    public function playTrack($id, $data, $title, $art)
+    public function playTrack(Track $track)
     {   
+        $next = Track::where('id', '>', $track->id)->first()?->id;
+        $prev = Track::where('id', '<', $track->id)->orderBy('id', 'desc')->first()?->id;
+
         $this->dispatch('load-track', [
-            'id' => $id,
-            'data' => $data,
-            'title' => $title,
-            'art' => $art,
+            'id' => $track->id,
+            'title' => $track->artist .' - '. $track->title,
+            'art' => ($track->art != null) ? $track->art : 'null',
+            'next' => $next,
+            'prev' => $prev,
         ]);
         
-        $this->skipRender(); 
+        $this->skipRender();
     }
 }

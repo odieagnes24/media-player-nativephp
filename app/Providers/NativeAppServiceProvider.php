@@ -21,7 +21,7 @@ class NativeAppServiceProvider implements ProvidesPhpIni
             ->width(1011)
             ->height(718)
             ->rememberState()
-            ->route('list');
+            ->route('tracks');
     }
 
     /**

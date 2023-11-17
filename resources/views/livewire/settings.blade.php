@@ -30,11 +30,13 @@
         @endforeach
     </div>
 
+    @teleport('body')
     <!-- Modal -->
-    <div wire:ignore.self class="modal fade" id="scanModal" tabindex="-1"  aria-labelledby="scanModalLabel" aria-hidden="true">
+    <div wire:ignore.self class="modal fade" id="scanModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"  aria-labelledby="scanModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
             <div class="modal-body">
+                <button type="button" class="btn-close d-none" id="closeScanModal" data-bs-dismiss="modal" aria-label="Close"></button>
                 <div class="w-100 d-flex jusitfy-content-center py-3">
                     <div class="w-100">
                         <h2>Scanning...</h2> 
@@ -49,15 +51,16 @@
             </div>
         </div>
     </div>
-</div>
 
-@push('my-scripts')
     <script>
         var scanModal = new bootstrap.Modal(document.getElementById('scanModal'))
 
         Livewire.on('close-scan-modal', (event) => {
+            console.log('test')
             scanModal.hide()
         });
     </script>
-@endpush
+    @endteleport
+</div>
+
 
