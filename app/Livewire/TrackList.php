@@ -46,7 +46,7 @@ class TrackList extends Component
     }    
     
     public function doPopulate()
-    {   return;
+    {   
         while($this->page <= $this->total_page) {
             $this->nextBatch();
         }
