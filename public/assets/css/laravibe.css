@@ -103,6 +103,11 @@ body,
 
 /* Now-playing title + time labels */
 #song_title { color: var(--lv-text); font-weight: 500; }
+#song_title a { color: inherit; text-decoration: none; cursor: default; }
+.np-link { cursor: pointer; }
+.np-link:hover { text-decoration: underline; }
+.np-artist { color: var(--lv-text-muted) !important; font-weight: 400; }
+#favorite_btn.is-fav { color: var(--lv-accent) !important; }
 #time, #duration {
     background: rgba(0, 0, 0, 0.6) !important;
     color: #fff !important;          /* always white — sits on a dark pill */

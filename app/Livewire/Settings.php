@@ -8,6 +8,7 @@ use App\Models\Track;
 use Exception;
 use getID3 as GlobalGetID3;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Native\Desktop\Dialog;
 use Native\Desktop\Notification;
@@ -23,10 +24,9 @@ class Settings extends Component
     public $progress = 0;
 
     public function doScan()
-    {
-        // ini_set('memory_limit', '1024M');
+    { 
         ini_set('max_execution_time', '3600');
-        // sleep(1);
+
         $this->progress = 0;
 
         $paths = Path::all();
@@ -36,15 +36,26 @@ class Settings extends Component
         // the Livewire request and leaves the modal stuck at 0%.
         if ($paths->isEmpty())
         {
-            $this->closeScanModal();
-
             Notification::new()
                 ->title(config('app.name'))
                 ->message('No folders to scan. Add a folder first.')
                 ->show();
-
+         
             return;
         }
+
+        $this->openScanModal();
+        $this->dispatch('perform-scan');  
+    }
+
+    #[On('perform-scan')]
+    public function performScan()
+    {     
+        ini_set('max_execution_time', '3600');
+
+        $this->progress = 0;
+
+        $paths = Path::all();
 
         foreach($paths as $path)
         {
@@ -61,29 +72,25 @@ class Settings extends Component
             ->message('Scan complete — your library now has ' . Track::count() . ' tracks.')
             ->show();
 
-        // Storage::disk('public')->put('/scanned/data.json', json_encode($this->scanned_files));
+        $this->closeScanModal();
+
     }
 
     // Reliably close the scan modal via Livewire-pushed JS (no dependency on a
     // teleported event listener). hide() is a safe no-op if already closed.
     private function closeScanModal()
     {
-        $this->js("bootstrap.Modal.getOrCreateInstance(document.getElementById('scanModal'))?.hide()");
+        $this->js("bootstrap.Modal.getOrCreateInstance(document.getElementById('scanModal'))?.hide()");     
+    }
+
+    private function openScanModal()
+    {
+        $this->js("bootstrap.Modal.getOrCreateInstance(document.getElementById('settingsModal'))?.hide()");
+        $this->js("bootstrap.Modal.getOrCreateInstance(document.getElementById('scanModal'))?.show()");
     }
 
     private function analyzeFiles()
     {  
-        // $getId3 = new GlobalGetID3;
-        // $track = $getId3->analyze('C:\web\media-player-native-php\public\songs\DNA.mp3');
-      
-        // $getId3 = new GlobalGetID3;
-        // $track2 = $getId3->analyze('C:\web\media-player-native-php\public\songs\Am I Wrong - Nico & Vinz.mp3');
-        
-        // $getId3 = new GlobalGetID3;
-        // $track3 = $getId3->analyze('C:\web\media-player-native-php\public\songs\Passionfruit.flac');
-
-        // dd($track, $track2, $track3);
-
         // Set the chunk size (adjust this according to your needs)
         $chunkSize = 10;
 
@@ -145,7 +152,26 @@ class Settings extends Component
     
         if(array_key_exists('tags', $track))
         {
-            $tag = current($track['tags']);
+            // Pick the richest tag block. id3v1 is Latin-1 only, so it stores '?'
+            // for Japanese/Unicode titles — prefer id3v2/vorbiscomment and keep
+            // id3v1 as a last resort. (current() would grab id3v1 since getID3
+            // lists it first, which is what mangled non-Latin titles.)
+            $tags = $track['tags'];
+            $tag = null;
+
+            foreach (['id3v2', 'vorbiscomment', 'quicktime', 'asf', 'ape', 'id3v1'] as $preferred)
+            {
+                if (array_key_exists($preferred, $tags))
+                {
+                    $tag = $tags[$preferred];
+                    break;
+                }
+            }
+
+            if ($tag === null)
+            {
+                $tag = current($tags);
+            }
 
             if(array_key_exists('title', $tag))
             {

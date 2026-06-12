@@ -1,7 +1,7 @@
 <div class="d-flex justify-content-center">
     <div class="p-2">
         <button class="btn btn-outline-primary" wire:click="addFolder">Add Folder</button>
-        <button class="btn btn-outline-success" wire:click="doScan"  wire:target="doScan" wire:loading.attr="disabled" data-bs-toggle="modal" data-bs-target="#scanModal">
+        <button class="btn btn-outline-success" wire:click="doScan"  wire:target="doScan" wire:loading.attr="disabled">
             <span class="d-none" wire:target="doScan" wire:loading.class.remove="d-none" >
                 Scanning...
             </span>
@@ -9,11 +9,6 @@
                 Scan
             </span>
         </button>
-
-        <!-- <button type="button" class="btn btn-primary" >
-            Launch demo modal
-        </button> -->
-
 
         @foreach ($paths as $path)
             <div class="mt-4">

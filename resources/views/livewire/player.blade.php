@@ -108,10 +108,28 @@
                 <div class="flex-shrink-0 me-2">
                     <img id="album_art" src="/assets/default_art_1.png" onerror="this.onerror=null;this.src='/assets/default_art_1.png';" class="rounded" alt="Track" width="80px" height="80px">
                 </div>
-                <div id="waveform" class="flex-fill">
-                    <div id="time">0:00</div>
-                    <div id="song_title">Loading...</div>
-                    <div id="duration">0:00</div>
+                <div class="flex-fill" style="min-width: 0;">
+                    {{-- Now-playing label sits ABOVE the wave so the clicks land on the
+                         links instead of being swallowed by WaveSurfer's seek layer.
+                         min-width:0 lets this flex column shrink so the (very wide)
+                         waveform scrolls inside instead of blowing out the page. --}}
+                    <div class="d-flex align-items-center mb-1">
+                        <div id="song_title" class="flex-fill text-truncate" style="min-width: 0;">
+                            <a href="#" id="np_title" class="np-link">Loading...</a>
+                            <span id="np_sep" class="np-sep d-none"> — </span>
+                            <a href="#" id="np_artist" class="np-link np-artist d-none"></a>
+                        </div>
+                        <span class="player-control flex-shrink-0 ms-3" id="favorite_btn" title="Add to favorites">
+                            {{-- outline (not favorited) --}}
+                            <svg id="fav-icon-empty" xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572" /></svg>
+                            {{-- filled (favorited) --}}
+                            <svg id="fav-icon-filled" xmlns="http://www.w3.org/2000/svg" class="icon d-none" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="currentColor" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572" /></svg>
+                        </span>
+                    </div>
+                    <div id="waveform" style="overflow: hidden;">
+                        <div id="time">0:00</div>
+                        <div id="duration">0:00</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -176,9 +194,19 @@
             let btn_play = document.getElementById('btn-play')
             let btn_pause = document.getElementById('btn-pause')
             let song_title = document.getElementById('song_title')
+            let np_title = document.getElementById('np_title')
+            let np_sep = document.getElementById('np_sep')
+            let np_artist = document.getElementById('np_artist')
             let album_art = document.getElementById('album_art')
             let prev_btn = document.getElementById('prev_btn')
             let next_btn = document.getElementById('next_btn')
+            let favorite_btn = document.getElementById('favorite_btn')
+            let fav_icon_empty = document.getElementById('fav-icon-empty')
+            let fav_icon_filled = document.getElementById('fav-icon-filled')
+
+            // The track object currently loaded in the bar (drives the title/artist
+            // links and the heart button). Set by loadTrack().
+            let loaded = null
 
             // ===== Play queue (client-side) =====
             // queue: ordered [{ id, title, art:bool }] for the active view.
@@ -192,6 +220,11 @@
             let shuffleOn = false
             let repeatMode = 0   // 0 = off, 1 = repeat all, 2 = repeat one
             let lastVolume = 1
+
+            // Resume / persistence state
+            let autoplayOnReady = true   // play automatically once a track is loaded
+            let pendingSeek = null       // seconds to seek to once the track is ready
+            let lastSaveTs = 0           // throttle for periodic position saves
 
             const shuffle_btn     = document.getElementById('shuffle_btn')
             const repeat_btn      = document.getElementById('repeat_btn')
@@ -268,6 +301,7 @@
                 shuffleOn = !shuffleOn
                 shuffle_btn.classList.toggle('is-active', shuffleOn)
                 if (queue.length) buildOrder(order[pos])   // reorder upcoming, keep current playing
+                savePlayerState()
             })
 
             // ---- Repeat (off -> all -> one) -----------------------------------
@@ -276,6 +310,7 @@
                 repeat_btn.classList.toggle('is-active', repeatMode !== 0)
                 repeat_icon.classList.toggle('d-none', repeatMode === 2)
                 repeat_one_icon.classList.toggle('d-none', repeatMode !== 2)
+                savePlayerState()
             })
 
             // ---- Volume -------------------------------------------------------
@@ -290,9 +325,11 @@
                 const v = parseFloat(e.target.value)
                 if (v > 0) lastVolume = v
                 applyVolume(v)
+                savePlayerState()
             })
             volume_btn.addEventListener('click', () => {
                 applyVolume(wavesurfer.getVolume() > 0 ? 0 : (lastVolume || 1))
+                savePlayerState()
             })
 
             // ---- Play / Pause -------------------------------------------------
@@ -300,6 +337,7 @@
                 e.preventDefault()
                 wavesurfer.playPause()
                 wavesurfer.isPlaying() ? showPlaying() : showPaused()
+                savePlayerState()
             });
 
             const formatTime = (seconds) => {
@@ -312,35 +350,144 @@
             const timeEl = document.querySelector('#time')
             const durationEl = document.querySelector('#duration')
 
-            // Title of the track currently being loaded (used by the loading handler)
-            let currentTitle = ''
-
             // Register playback listeners ONCE (not per loadTrack, or they stack up)
             wavesurfer.on('decode', (duration) => (durationEl.textContent = formatTime(duration)))
-            wavesurfer.on('timeupdate', (currentTime) => (timeEl.textContent = formatTime(currentTime)))
+            wavesurfer.on('timeupdate', (currentTime) => {
+                timeEl.textContent = formatTime(currentTime)
+                const now = Date.now()
+                if (now - lastSaveTs > 3000) { lastSaveTs = now; savePlayerState() }   // persist position
+            })
 
             // When a track ends, advance through the queue (handles repeat / shuffle).
             wavesurfer.on('finish', () => nextTrack(true))
 
+            // Render the title / artist links and the heart for a track.
+            function applyNowPlaying(t) {
+                np_title.textContent = (t && t.title) ? t.title : '—'
+
+                const artist = t && t.artist ? t.artist : ''
+                np_artist.textContent = artist
+                np_sep.classList.toggle('d-none', !artist)
+                np_artist.classList.toggle('d-none', !artist)
+
+                // Only show the clickable affordance when there's somewhere to go.
+                np_title.classList.toggle('np-link', !!(t && t.album))
+                np_artist.classList.toggle('np-link', !!artist)
+
+                applyFavoriteIcon(!!(t && t.favorite))
+            }
+
+            function applyFavoriteIcon(fav) {
+                favorite_btn.classList.toggle('is-fav', fav)
+                fav_icon_filled.classList.toggle('d-none', !fav)
+                fav_icon_empty.classList.toggle('d-none', fav)
+                favorite_btn.setAttribute('title', fav ? 'Remove from favorites' : 'Add to favorites')
+            }
+
+            // Title -> album, artist -> artist (handled by the TrackList component).
+            np_title.addEventListener('click', (e) => {
+                e.preventDefault()
+                if (loaded && loaded.album) Livewire.dispatch('player-open-album', { name: loaded.album })
+            })
+            np_artist.addEventListener('click', (e) => {
+                e.preventDefault()
+                if (loaded && loaded.artist) Livewire.dispatch('player-open-artist', { name: loaded.artist })
+            })
+
+            // Heart -> toggle favorite for the loaded track (optimistic + persisted).
+            favorite_btn.addEventListener('click', () => {
+                if (!loaded) return
+                loaded.favorite = !loaded.favorite
+                applyFavoriteIcon(loaded.favorite)
+                Livewire.dispatch('player-favorite', { id: loaded.id })
+                savePlayerState()
+            })
+
             wavesurfer.on('loading', (percent) => {
-                song_title.innerHTML = percent < 100 ? ('Loading ' + percent + '%') : currentTitle
+                if (percent < 100) {
+                    np_title.textContent = 'Loading ' + percent + '%'
+                    np_sep.classList.add('d-none')
+                    np_artist.classList.add('d-none')
+                } else {
+                    applyNowPlaying(loaded)
+                }
             })
 
             wavesurfer.on('ready', () => {
-                song_title.innerHTML = currentTitle
+                applyNowPlaying(loaded)
                 wavesurfer.setOptions({ minPxPerSec: ZOOM })           // re-assert zoom after load
                 wavesurfer.setVolume(parseFloat(volume_slider.value))  // volume resets on each load
-                wavesurfer.play()
-                showPlaying()
+
+                if (pendingSeek != null) {
+                    wavesurfer.setTime(pendingSeek)
+                    pendingSeek = null
+                }
+
+                if (autoplayOnReady) {
+                    wavesurfer.play()
+                    showPlaying()
+                } else {
+                    showPaused()                                       // resumed track waits for the user
+                }
+
+                savePlayerState()
             })
 
-            // t = { id, title, art:bool }
-            function loadTrack(t)
+            // t = { id, title, art:bool }; opts: { autoplay, seek }
+            function loadTrack(t, { autoplay = true, seek = null } = {})
             {
-                currentTitle = t.title
+                loaded = t
+                autoplayOnReady = autoplay
+                pendingSeek = seek
+                applyNowPlaying(t)
                 album_art.setAttribute('src', t.art ? '/art/' + t.id : '/assets/default_art_1.png')
                 wavesurfer.load('/readfile/' + t.id)
             }
+
+            // ---- Persistence: resume where you left off -----------------------
+            function savePlayerState() {
+                if (!queue.length) return
+                try {
+                    localStorage.setItem('lv-player', JSON.stringify({
+                        queue: queue,
+                        index: order[pos],                  // current track's index within the queue
+                        time: wavesurfer.getCurrentTime(),
+                        shuffle: shuffleOn,
+                        repeat: repeatMode,
+                        volume: parseFloat(volume_slider.value),
+                    }))
+                } catch (e) { /* storage full / unavailable — ignore */ }
+            }
+
+            function restorePlayerState() {
+                let saved
+                try { saved = JSON.parse(localStorage.getItem('lv-player')) } catch (e) { return }
+                if (!saved || !Array.isArray(saved.queue) || !saved.queue.length) return
+
+                queue = saved.queue
+                shuffleOn = !!saved.shuffle
+                repeatMode = saved.repeat || 0
+
+                // Restore the control visuals
+                shuffle_btn.classList.toggle('is-active', shuffleOn)
+                repeat_btn.classList.toggle('is-active', repeatMode !== 0)
+                repeat_icon.classList.toggle('d-none', repeatMode === 2)
+                repeat_one_icon.classList.toggle('d-none', repeatMode !== 2)
+
+                const vol = (saved.volume != null) ? saved.volume : 1
+                if (vol > 0) lastVolume = vol
+                applyVolume(vol)
+
+                const idx = Math.min(Math.max(saved.index || 0, 0), queue.length - 1)
+                buildOrder(idx)
+
+                // Load the last track PAUSED at the saved position (don't auto-play on open).
+                loadTrack(currentTrack(), { autoplay: false, seek: saved.time || 0 })
+            }
+
+            // Best-effort save when the window is closing, then restore on open.
+            window.addEventListener('beforeunload', savePlayerState)
+            restorePlayerState()
         });
 
     </script>

@@ -129,13 +129,45 @@ class TrackList extends Component
     public function play(int $id)
     {
         $queue = $this->currentQueueTracks()->map(fn ($t) => [
-            'id'    => $t->id,
-            'title' => $t->artist . ' - ' . $t->title,
-            'art'   => (bool) $t->art,
+            'id'       => $t->id,
+            'title'    => $t->title,
+            'artist'   => $t->artist,
+            'album'    => $t->album,
+            'art'      => (bool) $t->art,
+            'favorite' => (bool) $t->favorite,
         ])->values();
 
         $this->dispatch('queue-play', ['queue' => $queue, 'start' => $id]);
         $this->skipRender();   // playback doesn't change the list UI
+    }
+
+    /* ---- Player-bar actions (dispatched from the now-playing bar) -------- */
+
+    // Heart button on the player bar toggles the currently-playing track.
+    #[On('player-favorite')]
+    public function favoriteFromPlayer($id)
+    {
+        $this->toggleFavorite((int) $id);
+    }
+
+    // Clicking the title on the player bar jumps to that album.
+    #[On('player-open-album')]
+    public function openAlbumByName($name)
+    {
+        $this->tab = 'albums';
+        $this->selectedArtist = null;
+        $this->selectedAlbum = $name;
+        $this->perPage = 100;
+    }
+
+    // Clicking the artist on the player bar jumps to that artist.
+    #[On('player-open-artist')]
+    public function openArtistByName($name)
+    {
+        $this->tab = 'artist';
+        $this->selectedAlbum = null;
+        $this->selectedArtist = $name;
+        $this->perPage = 100;
     }
 
     // The ordered set of tracks backing whatever view is active.

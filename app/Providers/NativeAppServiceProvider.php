@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Native\Desktop\Facades\Window;
+use Native\Desktop\Facades\Menu;
 use Native\Desktop\Contracts\ProvidesPhpIni;
 
 class NativeAppServiceProvider implements ProvidesPhpIni
@@ -13,11 +14,16 @@ class NativeAppServiceProvider implements ProvidesPhpIni
      */
     public function boot(): void
     {
+        // Replace the default File/Edit/View/Window/Help menu with an empty one
+        // so there is nothing to reveal when Alt is pressed on Windows.
+        Menu::create();
+
         Window::open()
             ->minWidth(1011)
             ->minHeight(718)
             ->width(1011)
             ->height(718)
+            ->hideMenu()
             ->rememberState()
             ->route('tracks');
     }
