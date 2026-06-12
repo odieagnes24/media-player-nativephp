@@ -17,5 +17,10 @@ class Track extends Model
         'playtime',
         'art',
         'mime_type',
+        'favorite',
+    ];
+
+    protected $casts = [
+        'favorite' => 'boolean',
     ];
 }

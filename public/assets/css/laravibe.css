@@ -1,0 +1,318 @@
+/* ==========================================================================
+   LaraVibe — dark neutral theme (Apple Music-style)
+   Layered on top of Tabler. Tokens drive the whole palette; change them here.
+   ========================================================================== */
+
+/* Light palette (default) — clean neutral, Apple-Music-light feel */
+:root,
+[data-bs-theme="light"] {
+    --lv-bg:          #ffffff;   /* app background */
+    --lv-surface:     #f6f6f8;   /* player bar / cards */
+    --lv-surface-2:   #eeeef1;   /* raised / hover */
+    --lv-surface-3:   #e5e5ea;   /* active row */
+    --lv-border:      #e4e4e9;
+
+    --lv-text:        #1c1c1e;
+    --lv-text-muted:  #6a6a73;
+    --lv-text-dim:    #9a9aa3;
+
+    --lv-accent:      #6d5de6;   /* deeper violet for contrast on light */
+    --lv-accent-soft: rgba(109, 93, 230, 0.12);
+
+    /* Waveform */
+    --lv-wave:          #c9c9d2;
+    --lv-wave-progress: #6d5de6;
+
+    --lv-radius: 10px;
+}
+
+/* Dark palette — softened neutral charcoal (not pure black) */
+[data-bs-theme="dark"] {
+    --lv-bg:          #17171a;
+    --lv-surface:     #202024;
+    --lv-surface-2:   #2a2a2f;
+    --lv-surface-3:   #34343a;
+    --lv-border:      #34343a;
+
+    --lv-text:        #ededef;
+    --lv-text-muted:  #9a9aa3;
+    --lv-text-dim:    #74747d;
+
+    --lv-accent:      #8b7bf0;
+    --lv-accent-soft: rgba(139, 123, 240, 0.15);
+
+    --lv-wave:          #45454d;
+    --lv-wave-progress: #8b7bf0;
+}
+
+/* ---- Base ---------------------------------------------------------------- */
+body,
+.page {
+    background-color: var(--lv-bg);
+    color: var(--lv-text);
+}
+
+/* Strip Tabler's admin page chrome so the player feels compact */
+.page-wrapper { min-height: auto; }
+.page-body    { margin-top: 0 !important; }
+
+/* ---- Player bar (was bg-yellow-lt) -------------------------------------- */
+.player-bar {
+    background-color: var(--lv-surface) !important;
+    border-bottom: 1px solid var(--lv-border);
+}
+
+/* Transport / header controls */
+.player-control {
+    color: var(--lv-text-muted) !important;
+    cursor: pointer;
+    transition: color .15s ease, transform .15s ease;
+    display: inline-flex;
+    align-items: center;
+}
+.player-control:hover { color: var(--lv-text) !important; }
+.player-control:active { transform: scale(0.92); }
+/* Active toggle state (shuffle on, repeat on) */
+.player-control.is-active { color: var(--lv-accent) !important; }
+
+/* Volume slider */
+.vol-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 70px;
+    height: 4px;
+    border-radius: 4px;
+    background: var(--lv-surface-3);
+    outline: none;
+    cursor: pointer;
+}
+.vol-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--lv-accent);
+    border: none;
+    cursor: pointer;
+}
+
+/* The central play/pause gets the accent so it reads as primary */
+#play { color: var(--lv-accent) !important; }
+#play:hover { color: var(--lv-accent) !important; filter: brightness(1.2); }
+
+/* Now-playing title + time labels */
+#song_title { color: var(--lv-text); font-weight: 500; }
+#time, #duration {
+    background: rgba(0, 0, 0, 0.6) !important;
+    color: #fff !important;          /* always white — sits on a dark pill */
+    border-radius: 4px;
+}
+
+/* Album art on the bar */
+#album_art { box-shadow: 0 2px 10px rgba(0,0,0,.5); }
+
+/* Settings button — neutral, not green */
+.btn-settings {
+    color: var(--lv-text-muted) !important;
+    background: transparent !important;
+    border: 1px solid var(--lv-border) !important;
+    border-radius: 8px;
+    transition: color .15s ease, border-color .15s ease;
+}
+.btn-settings:hover {
+    color: var(--lv-text) !important;
+    border-color: var(--lv-accent) !important;
+}
+
+/* Header buttons share one fixed, centered box so they line up exactly */
+.btn-settings,
+.btn-theme-toggle {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0 !important;
+}
+.btn-settings .icon,
+.btn-theme-toggle .icon {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+}
+
+/* Theme toggle — shares the settings button look; icon swaps by theme */
+.btn-theme-toggle {
+    color: var(--lv-text-muted) !important;
+    background: transparent !important;
+    border: 1px solid var(--lv-border) !important;
+    border-radius: 8px;
+    transition: color .15s ease, border-color .15s ease;
+}
+.btn-theme-toggle:hover {
+    color: var(--lv-text) !important;
+    border-color: var(--lv-accent) !important;
+}
+[data-bs-theme="dark"]  .theme-icon-sun  { display: block; }
+[data-bs-theme="dark"]  .theme-icon-moon { display: none; }
+[data-bs-theme="light"] .theme-icon-sun  { display: none; }
+[data-bs-theme="light"] .theme-icon-moon { display: block; }
+
+/* ---- Library tabs (List / Albums / Artist) ------------------------------ */
+.lv-tabs {
+    background-color: var(--lv-bg) !important;
+    position: sticky;
+    top: var(--player-height, 150px);   /* pinned just under the sticky player */
+    z-index: 20;                          /* below the player (sticky-top = 1020) */
+    border-bottom: 1px solid var(--lv-border);
+}
+.lv-tab {
+    color: var(--lv-text-dim);
+    cursor: pointer;
+    font-size: 1.05rem;
+    font-weight: 600;
+    padding-bottom: .35rem;
+    border-bottom: 2px solid transparent;
+    transition: color .15s ease, border-color .15s ease;
+}
+.lv-tab:hover { color: var(--lv-text-muted); }
+.lv-tab.active {
+    color: var(--lv-text);
+    border-bottom-color: var(--lv-accent);
+}
+
+/* ---- Track list --------------------------------------------------------- */
+.card {
+    background-color: transparent;
+    border: none;
+}
+.card-list-group .list-group-item {
+    background-color: transparent;
+    border: none;
+    border-bottom: 1px solid var(--lv-border);
+    padding-top: .55rem;
+    padding-bottom: .55rem;
+    transition: background-color .12s ease;
+}
+.card-list-group:hover .list-group-item {
+    background-color: var(--lv-surface);
+}
+.card-list-group .list-group-item:hover {
+    background-color: var(--lv-surface-2);
+}
+
+/* Track title / artist */
+.track-title  { color: var(--lv-text); font-weight: 500; }
+.track-artist { color: var(--lv-text-muted) !important; font-size: .85rem; }
+.track-time   { color: var(--lv-text-dim) !important; font-variant-numeric: tabular-nums; }
+
+/* Hover play overlay on the thumbnail */
+.track-art-overlay {
+    background: rgba(0, 0, 0, 0.55) !important;
+    backdrop-filter: blur(2px);
+}
+.track-art-overlay span { color: #fff !important; }
+
+/* Row action buttons (heart / dots) */
+.btn-row-action {
+    color: var(--lv-text-dim);
+    background: transparent;
+    border: 0;
+    padding: 2px;
+    line-height: 0;
+    cursor: pointer;
+    transition: color .15s ease;
+}
+.btn-row-action:hover { color: var(--lv-text); }
+.btn-row-action.is-fav { color: var(--lv-accent); }
+
+/* ---- Album / Artist grid ------------------------------------------------ */
+.lv-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 18px;
+}
+.lv-card {
+    cursor: pointer;
+    border-radius: var(--lv-radius);
+    padding: 10px;
+    transition: background-color .15s ease, transform .15s ease;
+}
+.lv-card:hover { background-color: var(--lv-surface-2); }
+.lv-card-art {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.35);
+    background: var(--lv-surface-2);
+}
+.lv-card--round .lv-card-art { border-radius: 50%; }
+.lv-card-title {
+    margin-top: 10px;
+    color: var(--lv-text);
+    font-weight: 600;
+    font-size: .92rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.lv-card-sub {
+    color: var(--lv-text-muted);
+    font-size: .8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.lv-card--round .lv-card-title,
+.lv-card--round .lv-card-sub { text-align: center; }
+
+/* ---- Album / Artist detail header --------------------------------------- */
+.lv-detail-title { color: var(--lv-text); font-size: 1.35rem; font-weight: 700; }
+.lv-detail-sub   { color: var(--lv-text-muted); font-size: .85rem; }
+.btn-back {
+    color: var(--lv-text);
+    background: var(--lv-surface-2);
+    border: 1px solid var(--lv-border);
+    border-radius: 8px;
+    width: 36px; height: 36px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: border-color .15s ease, background-color .15s ease;
+}
+.btn-back:hover { border-color: var(--lv-accent); background: var(--lv-surface-3); }
+
+/* ---- Misc list states --------------------------------------------------- */
+.lv-empty,
+.lv-loadmore {
+    color: var(--lv-text-muted);
+    text-align: center;
+    padding: 24px;
+    font-size: .9rem;
+}
+
+/* Dim the content area while a tab switch is in flight */
+.lv-loading {
+    opacity: .45;
+    pointer-events: none;
+    transition: opacity .12s ease;
+}
+
+/* ---- Modal (settings) --------------------------------------------------- */
+.modal-content {
+    background-color: var(--lv-surface);
+    border: 1px solid var(--lv-border);
+    color: var(--lv-text);
+}
+.modal-header, .modal-footer { border-color: var(--lv-border); }
+
+/* ---- Scrollbar ---------------------------------------------------------- */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--lv-bg); }
+::-webkit-scrollbar-thumb {
+    background: var(--lv-surface-3);
+    border-radius: 6px;
+    border: 2px solid var(--lv-bg);
+}
+::-webkit-scrollbar-thumb:hover { background: #3a3a40; }

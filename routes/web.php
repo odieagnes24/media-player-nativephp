@@ -29,3 +29,4 @@ Route::get('/tracks', TrackList::class)->name('tracks')->lazy();
 Route::get('/settings', Settings::class)->name('settings');
 
 Route::get('/readfile/{track:id}', [PlayerController::class, 'readfile']);
+Route::get('/art/{track:id}', [PlayerController::class, 'art'])->name('art');

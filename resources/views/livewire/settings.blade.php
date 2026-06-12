@@ -18,7 +18,7 @@
         @foreach ($paths as $path)
             <div class="mt-4">
                 {{ $path->path }} 
-                <a href="#" style="color: red;" wire:click.prevent="remove({{ $path->id }})" onclick="confirm('Do you want to remove this path?')||event.stopImmediatePropagation()">
+                <a href="#" style="color: red;" wire:click.prevent="remove({{ $path->id }})" onclick="confirm('Remove this folder and its scanned tracks from your library?\n\nYour actual music files on disk will NOT be deleted.')||event.stopImmediatePropagation()">
                     <span class="d-none" wire:target="remove({{ $path->id }})" wire:loading.class.remove="d-none" >
                         Removing...
                     </span>
@@ -51,15 +51,6 @@
             </div>
         </div>
     </div>
-
-    <script>
-        var scanModal = new bootstrap.Modal(document.getElementById('scanModal'))
-
-        Livewire.on('close-scan-modal', (event) => {
-            console.log('test')
-            scanModal.hide()
-        });
-    </script>
     @endteleport
 </div>
 

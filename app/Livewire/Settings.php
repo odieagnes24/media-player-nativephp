@@ -10,6 +10,7 @@ use getID3 as GlobalGetID3;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Native\Laravel\Dialog;
+use Native\Laravel\Notification;
 
 class Settings extends Component
 {
@@ -27,12 +28,22 @@ class Settings extends Component
         ini_set('max_execution_time', '3600');
         // sleep(1);
         $this->progress = 0;
-        
+
         $paths = Path::all();
-  
-        if(empty($paths))
+
+        // Note: $paths is a Collection (always truthy), so use isEmpty(). Close
+        // the scan modal gracefully instead of aborting — aborting throws inside
+        // the Livewire request and leaves the modal stuck at 0%.
+        if ($paths->isEmpty())
         {
-            abort(404, 'No directory found!');
+            $this->closeScanModal();
+
+            Notification::new()
+                ->title(config('app.name'))
+                ->message('No folders to scan. Add a folder first.')
+                ->show();
+
+            return;
         }
 
         foreach($paths as $path)
@@ -42,8 +53,22 @@ class Settings extends Component
 
         $this->analyzeFiles();
 
-        
+        // Tell the track list to re-render so newly scanned tracks show up.
+        $this->dispatch('library-updated');
+
+        Notification::new()
+            ->title(config('app.name'))
+            ->message('Scan complete — your library now has ' . Track::count() . ' tracks.')
+            ->show();
+
         // Storage::disk('public')->put('/scanned/data.json', json_encode($this->scanned_files));
+    }
+
+    // Reliably close the scan modal via Livewire-pushed JS (no dependency on a
+    // teleported event listener). hide() is a safe no-op if already closed.
+    private function closeScanModal()
+    {
+        $this->js("bootstrap.Modal.getOrCreateInstance(document.getElementById('scanModal'))?.hide()");
     }
 
     private function analyzeFiles()
@@ -68,13 +93,11 @@ class Settings extends Component
         // Initialize a progress variable
         $progress = 0;
 
-        $id = 1;
-        
         foreach (array_chunk($this->files, $chunkSize) as $chunk) {
             // Process the current chunk here
             foreach($chunk as $file)
             {
-                $this->stream(  
+                $this->stream(
                     to: 'current_track',
                     content: $file,
                     replace: true,
@@ -83,9 +106,7 @@ class Settings extends Component
                 $getId3 = new GlobalGetID3;
                 $track = $getId3->analyze($file);
 
-                $this->saveTrack($track, $id);
-            
-                $id += 1;
+                $this->saveTrack($track);
             }
 
             // Update the progress
@@ -109,11 +130,10 @@ class Settings extends Component
         }
         
         $this->progress = 0;
-        // $this->dispatch('close-scan-modal');
-        $this->js("document.getElementById('closeScanModal').click()"); 
+        $this->closeScanModal();
     }
 
-    private function saveTrack($track, $id)
+    private function saveTrack($track)
     { 
         $path = $track['filenamepath'];
         $title = pathinfo($track['filenamepath'], PATHINFO_FILENAME);
@@ -184,20 +204,23 @@ class Settings extends Component
 
         $has_art = false;
 
+        // Use a filename derived from the track's path so it is stable and unique
+        // across rescans. A per-scan counter ($id) would collide between scans and
+        // leave DB rows pointing at art files that a later scan overwrote or removed.
+        $art_path = '/scanned/art/'. md5($path) .'.png';
+
         if(!empty($picture))
         {
             $im = $this->attemptImageString($picture);
-            
+
             if($im)
             {
                 $temp_file = tempnam(sys_get_temp_dir(), 'image_') . '.png';
-    
+
                 imagepng($im, $temp_file, 0);
-        
-                $file_path = '/scanned/art/'. $id .'.png';
-        
-                Storage::disk('public')->put($file_path, file_get_contents($temp_file));
-        
+
+                Storage::disk('public')->put($art_path, file_get_contents($temp_file));
+
                 imagedestroy($im);
                 unlink($temp_file);
 
@@ -214,7 +237,7 @@ class Settings extends Component
             'artist' => $artist,
             'album' => $album,
             'playtime' => $playtime,
-            'art' => ($has_art) ? '/scanned/art/'. $id .'.png' : null,
+            'art' => ($has_art) ? $art_path : null,
             'mime_type' => $mime_type,
         ]);
       
@@ -297,6 +320,22 @@ class Settings extends Component
 
     public function remove(Path $path)
     {
+        // Remove the folder's scanned tracks (and their cached art) from the
+        // library. This NEVER touches the actual music files on disk.
+        $dir = rtrim(str_replace('\\', '/', $path->path), '/') . '/';
+
+        $tracks = Track::all()->filter(
+            fn ($t) => str_starts_with(str_replace('\\', '/', $t->path), $dir)
+        );
+
+        foreach ($tracks as $track) {
+            if ($track->art) {
+                Storage::disk('public')->delete(ltrim($track->art, '/'));
+            }
+        }
+
+        Track::whereIn('id', $tracks->pluck('id'))->delete();
+
         $path->delete();
     }
 }

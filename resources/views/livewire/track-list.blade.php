@@ -1,77 +1,109 @@
 <div>
-<div class="px-4 pt-3" style="background-color: #f6f8fb;">
-    <div class="d-flex">
-        <h2 class="me-4" style="cursor: pointer; border-bottom: solid orange;">List</h2>
-        <h2 class="me-4" style="cursor: pointer;">Albums</h2>
-        <h2 class="me-4" style="cursor: pointer;">Artist</h2>
+    {{-- Tabs — `tab` is entangled with the server property, so the highlight
+         updates instantly on click while the content switch syncs in the back. --}}
+    <div class="lv-tabs px-4 pt-3" x-data="{ tab: $wire.entangle('tab').live }">
+        <div class="d-flex">
+            <span class="lv-tab me-4" :class="tab === 'list' && 'active'"      @click="tab = 'list'">List</span>
+            <span class="lv-tab me-4" :class="tab === 'favorites' && 'active'" @click="tab = 'favorites'">Favorites</span>
+            <span class="lv-tab me-4" :class="tab === 'albums' && 'active'"    @click="tab = 'albums'">Albums</span>
+            <span class="lv-tab me-4" :class="tab === 'artist' && 'active'"    @click="tab = 'artist'">Artist</span>
+        </div>
     </div>
-</div>
-<div class="card">
-    <div wire:init="doPopulate"></div>
-    @foreach ($this->tracks as $key => $track)
-        <div class="list-group card-list-group" x-data="{
-            is_hover: false
-        }">
-            <div class="list-group-item">
-            <div class="row g-2 align-items-center">
-                <div class="col-auto" style="position:relative" wire:click="$dispatch('play-track', { track: '{{ $track->id }}' })" @mouseover="is_hover = true" @mouseout="is_hover = false">
-                <div x-show.important="is_hover" class="rounded d-flex justify-content-center align-items-center" style="position:absolute; width:40px; height:40px; background:#f1f5f9; opacity:0.9;">
-                    <span style="color: #6c7a91; cursor:pointer;">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-player-play-filled" id="btn-play" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                            <path d="M6 4v16a1 1 0 0 0 1.524 .852l13 -8a1 1 0 0 0 0 -1.704l-13 -8a1 1 0 0 0 -1.524 .852z" stroke-width="0" fill="currentColor"></path>
-                        </svg>
 
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-player-pause-filled d-none" id="btn-pause" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                            <path d="M9 4h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h2a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2z" stroke-width="0" fill="currentColor"></path>
-                            <path d="M17 4h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h2a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2z" stroke-width="0" fill="currentColor"></path>
-                        </svg>
-                    </span>
+    {{-- Content dims briefly only while a tab switch is loading --}}
+    <div wire:target="tab" wire:loading.delay.class="lv-loading">
+
+    {{-- ============================== LIST ============================== --}}
+    @if($tab === 'list')
+        <div class="card">
+            @forelse ($this->tracks as $track)
+                @include('livewire.partials.track-row', ['track' => $track])
+            @empty
+                <div class="lv-empty">No tracks yet — open Settings and scan a folder.</div>
+            @endforelse
+
+            @if($this->tracks->hasMorePages())
+                {{-- Auto-load the next page when this sentinel scrolls into view --}}
+                <div wire:key="load-more" x-data
+                     x-init="new IntersectionObserver((e) => e[0].isIntersecting && $wire.loadMore())
+                                .observe($el)"
+                     class="lv-loadmore">
+                    Loading more…
                 </div>
-                <img src="@if($track['art'] != null) /storage{{ $track->art }} @else /assets/default_art_1.png @endif" class="rounded" alt="Song" width="40" height="40">
-                </div>
-                <div class="col">
-                    {{ $track->title }}
-                <div class="text-muted">
-                    {{ $track->artist }}
-                </div>
-                </div>
-                <div class="col-auto text-muted">
-                {{ $track->playtime }}
-                </div>
-                <div class="col-auto">
-                    <a href="#" class="link-secondary">
-                        <button class="switch-icon" data-bs-toggle="switch-icon">
-                        <span class="switch-icon-a text-muted">
-                            <!-- Download SVG icon from http://tabler-icons.io/i/heart -->
-                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572" /></svg>
-                        </span>
-                        <span class="switch-icon-b text-red">
-                            <!-- Download SVG icon from http://tabler-icons.io/i/heart -->
-                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-filled" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572" /></svg>
-                        </span>
-                        </button>
-                    </a>
-                </div>
-                <div class="col-auto lh-1">
-                    <div class="dropdown">
-                        <a href="#" class="link-secondary" data-bs-toggle="dropdown"><!-- Download SVG icon from http://tabler-icons.io/i/dots -->
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M19 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /></svg>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-end">
-                        <a class="dropdown-item" href="#">
-                            Action
-                        </a>
-                        <a class="dropdown-item" href="#">
-                            Another action
-                        </a>
-                        </div>
+            @endif
+        </div>
+
+    {{-- ============================== FAVORITES ======================== --}}
+    @elseif($tab === 'favorites')
+        <div class="card">
+            @forelse ($this->favorites as $track)
+                @include('livewire.partials.track-row', ['track' => $track])
+            @empty
+                <div class="lv-empty">No favorites yet — tap the &#9825; on any track to add it here.</div>
+            @endforelse
+        </div>
+
+    {{-- ============================== ALBUMS =========================== --}}
+    @elseif($tab === 'albums')
+        @if($selectedAlbum === null)
+            <div class="lv-grid px-4 py-3">
+                @forelse ($this->albums as $i => $album)
+                    <div class="lv-card" wire:key="album-{{ $i }}" wire:click="openAlbum({{ $i }})">
+                        <img class="lv-card-art"
+                             src="{{ $album->cover_id ? '/art/' . $album->cover_id : '/assets/default_art_1.png' }}"
+                             onerror="this.onerror=null;this.src='/assets/default_art_1.png';" alt="">
+                        <div class="lv-card-title">{{ $album->album }}</div>
+                        <div class="lv-card-sub">{{ $album->artist }} · {{ $album->track_count }} {{ \Illuminate\Support\Str::plural('track', $album->track_count) }}</div>
                     </div>
-                    </div>
+                @empty
+                    <div class="lv-empty">No albums yet.</div>
+                @endforelse
+            </div>
+        @else
+            <div class="lv-detail-head px-4 py-3 d-flex align-items-center">
+                <button class="btn-back me-3" wire:click="back">&larr;</button>
+                <div>
+                    <div class="lv-detail-title">{{ $selectedAlbum }}</div>
+                    <div class="lv-detail-sub">{{ $this->albumTracks->count() }} {{ \Illuminate\Support\Str::plural('track', $this->albumTracks->count()) }}</div>
                 </div>
             </div>
-        </div>
-    @endforeach
-</div>
+            <div class="card">
+                @foreach ($this->albumTracks as $track)
+                    @include('livewire.partials.track-row', ['track' => $track])
+                @endforeach
+            </div>
+        @endif
+
+    {{-- ============================== ARTIST =========================== --}}
+    @elseif($tab === 'artist')
+        @if($selectedArtist === null)
+            <div class="lv-grid px-4 py-3">
+                @forelse ($this->artists as $i => $artist)
+                    <div class="lv-card lv-card--round" wire:key="artist-{{ $i }}" wire:click="openArtist({{ $i }})">
+                        <img class="lv-card-art"
+                             src="{{ $artist->cover_id ? '/art/' . $artist->cover_id : '/assets/default_art_1.png' }}"
+                             onerror="this.onerror=null;this.src='/assets/default_art_1.png';" alt="">
+                        <div class="lv-card-title">{{ $artist->artist }}</div>
+                        <div class="lv-card-sub">{{ $artist->track_count }} {{ \Illuminate\Support\Str::plural('track', $artist->track_count) }}</div>
+                    </div>
+                @empty
+                    <div class="lv-empty">No artists yet.</div>
+                @endforelse
+            </div>
+        @else
+            <div class="lv-detail-head px-4 py-3 d-flex align-items-center">
+                <button class="btn-back me-3" wire:click="back">&larr;</button>
+                <div>
+                    <div class="lv-detail-title">{{ $selectedArtist }}</div>
+                    <div class="lv-detail-sub">{{ $this->artistTracks->count() }} {{ \Illuminate\Support\Str::plural('track', $this->artistTracks->count()) }}</div>
+                </div>
+            </div>
+            <div class="card">
+                @foreach ($this->artistTracks as $track)
+                    @include('livewire.partials.track-row', ['track' => $track])
+                @endforeach
+            </div>
+        @endif
+    @endif
+    </div>{{-- /content --}}
 </div>

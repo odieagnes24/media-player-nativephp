@@ -2,31 +2,15 @@
 
 namespace App\Livewire;
 
-use App\Models\Track;
-use Livewire\Attributes\On;
 use Livewire\Component;
 
 class Player extends Component
-{   
+{
+    // Playback is driven entirely client-side by the queue in player.blade.php.
+    // TrackList::play() dispatches the 'queue-play' browser event with the
+    // ordered queue for the active view; this component just renders the UI.
     public function render()
     {
         return view('livewire.player');
-    }
-
-    #[On('play-track')]
-    public function playTrack(Track $track)
-    {   
-        $next = Track::where('id', '>', $track->id)->first()?->id;
-        $prev = Track::where('id', '<', $track->id)->orderBy('id', 'desc')->first()?->id;
-
-        $this->dispatch('load-track', [
-            'id' => $track->id,
-            'title' => $track->artist .' - '. $track->title,
-            'art' => ($track->art != null) ? $track->art : 'null',
-            'next' => $next,
-            'prev' => $prev,
-        ]);
-        
-        $this->skipRender();
     }
 }
