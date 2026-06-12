@@ -9,8 +9,8 @@ use Exception;
 use getID3 as GlobalGetID3;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
-use Native\Laravel\Dialog;
-use Native\Laravel\Notification;
+use Native\Desktop\Dialog;
+use Native\Desktop\Notification;
 
 class Settings extends Component
 {
